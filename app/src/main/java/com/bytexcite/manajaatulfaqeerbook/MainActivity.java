@@ -5,6 +5,7 @@ import android.app.Activity;
 //import android.net.Uri;
 //import android.provider.OpenableColumns;
 //import android.support.v7.app.AppCompatActivity;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 //import android.view.View;
@@ -17,15 +18,41 @@ import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.shockwave.pdfium.PdfDocument;
 
+import java.io.File;
 import java.util.Calendar;
 import java.util.List;
 
-public class MainActivity extends Activity implements OnPageChangeListener,OnLoadCompleteListener{
+public class
+MainActivity extends Activity implements OnPageChangeListener,OnLoadCompleteListener{
     private static final String TAG = MainActivity.class.getSimpleName();
     public static final String SAMPLE_FILE = "duaBook.pdf";
     PDFView pdfView;
     Integer pageNumber = 0;
     String pdfFileName;
+
+    public static void deleteCache(Context context) {
+        try {
+            File dir = context.getCacheDir();
+            deleteDir(dir);
+        } catch (Exception e) { e.printStackTrace();}
+    }
+
+    public static boolean deleteDir(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+            return dir.delete();
+        } else if(dir!= null && dir.isFile()) {
+            return dir.delete();
+        } else {
+            return false;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,9 +116,25 @@ public class MainActivity extends Activity implements OnPageChangeListener,OnLoa
     }
 
 
+//    @Override
+//    public void loadComplete(int nbPages) {
+//        PdfDocument.Meta meta = pdfView.getDocumentMeta();
+//        printBookmarksTree(pdfView.getTableOfContents(), "-");
+//
+//    }
+
     @Override
     public void loadComplete(int nbPages) {
         PdfDocument.Meta meta = pdfView.getDocumentMeta();
+        Log.e(TAG, "title = " + meta.getTitle());
+        Log.e(TAG, "author = " + meta.getAuthor());
+        Log.e(TAG, "subject = " + meta.getSubject());
+        Log.e(TAG, "keywords = " + meta.getKeywords());
+        Log.e(TAG, "creator = " + meta.getCreator());
+        Log.e(TAG, "producer = " + meta.getProducer());
+        Log.e(TAG, "creationDate = " + meta.getCreationDate());
+        Log.e(TAG, "modDate = " + meta.getModDate());
+
         printBookmarksTree(pdfView.getTableOfContents(), "-");
 
     }
@@ -105,6 +148,15 @@ public class MainActivity extends Activity implements OnPageChangeListener,OnLoa
                 printBookmarksTree(b.getChildren(), sep + "-");
             }
         }
+    }
+
+
+    @Override
+    public void onDestroy() {
+
+        deleteCache(this);
+        super.onDestroy();
+
     }
 
 }
